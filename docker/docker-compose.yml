@@ -1,0 +1,44 @@
+version: '3'
+services:
+  consulserver:
+    image: consul
+    ports:
+      - "8500:8500"
+    command: consul agent -server -ui -data-dir=/tmp/agent -config-dir=/tmp/configconsul -bootstrap-expect=1 -client=0.0.0.0
+    volumes:
+      - "./ConsulConfig:/tmp/configconsul"
+    container_name: c_consulserver
+  identityserver:
+    image: chenyishi/identityserver:1.0
+    environment:
+      - identityserverport=1000
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "1000:1000"
+    container_name: c_identityserver
+  gatewayserver:
+    image: chenyishi/gatewayserver:1.0
+    environment:
+      - gatewayport=2000
+      - identityurl="****’Ê µip****"
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "2000:2000"
+    links: 
+      - identityserver:identityserver
+      - consulserver:consulserver
+    volumes:
+      - "./GatewayConfig:/app/Config"
+    container_name: c_gatewayserver
+  microservice:
+    image: chenyishi/microservice:1.0
+    environment:
+      - consulurl=consulserver
+      - microip=microservice
+      - microport=6666
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "6666:6666"
+    links:
+      - consulserver:consulserver
+    container_name: s_microservice
